@@ -26,7 +26,7 @@ export const Form = () => {
         }
         else if(location.pathname === "/login") actions.login(email, password)
     }
-
+    console.log(errorMessagePasswords);
 	return (
         <div className="row d-flex justify-content-center">
             <form className="form col-12 col-md-10 col-lg-6 col-xl-3" onSubmit={sendData}>
