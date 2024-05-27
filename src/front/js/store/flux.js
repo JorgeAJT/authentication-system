@@ -1,51 +1,93 @@
 const getState = ({ getStore, getActions, setStore }) => {
 	return {
 		store: {
-			message: null,
-			demo: [
-				{
-					title: "FIRST",
-					background: "white",
-					initial: "white"
-				},
-				{
-					title: "SECOND",
-					background: "white",
-					initial: "white"
-				}
-			]
+			auth: false, 
+			newUser: false,
+			error: undefined, 
 		},
 		actions: {
-			// Use getActions to call a function within a fuction
-			exampleFunction: () => {
-				getActions().changeColor(0, "green");
+			login: (email, password) => {
+				const requestOptions = {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ 
+						"email": email,
+						"password": password 
+					})
+				};
+				fetch(process.env.BACKEND_URL + "/api/login", requestOptions)
+					.then(response => {
+						if(response.status == 200) {
+							setStore({ auth: true })
+							setStore({ error: undefined })
+							let usernameEmail = email.split("@")[0];
+							localStorage.setItem("username", usernameEmail)
+						}
+						return response.json()
+					})
+					.then(data => {
+						if(data.error) {
+							setStore({ error: data.error })
+						}
+						if(data.access_token) {
+							localStorage.setItem("token", data.access_token)
+						}
+					});
 			},
-
-			getMessage: async () => {
-				try{
-					// fetching data from the backend
-					const resp = await fetch(process.env.BACKEND_URL + "/api/hello")
-					const data = await resp.json()
-					setStore({ message: data.message })
-					// don't forget to return something, that is how the async resolves
-					return data;
-				}catch(error){
-					console.log("Error loading message from backend", error)
-				}
+			signup: (email, password) => {
+				const requestOptions = {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ 
+						"email": email,
+						"password": password 
+					})
+				};
+				fetch(process.env.BACKEND_URL + "/api/signup", requestOptions)
+				.then(response => {
+					if(response.status == 200) {
+						setStore({ newUser: true })
+						setStore({ error: undefined })
+					}
+					return response.json()
+				})
+				.then(data => {
+					if(data.error) {
+						setStore({ error: data.error })
+					}
+				})
 			},
-			changeColor: (index, color) => {
-				//get the store
-				const store = getStore();
-
-				//we have to loop the entire demo array to look for the respective index
-				//and change its color
-				const demo = store.demo.map((elm, i) => {
-					if (i === index) elm.background = color;
-					return elm;
-				});
-
-				//reset the global store
-				setStore({ demo: demo });
+			// verifyPrivacy: () => {
+			// 	const token = localStorage.getItem("token");
+			// 	const requestOptions = {
+			// 		method: 'GET',
+			// 		headers: {
+			// 			'Content-Type': 'application/json', 
+			// 			'Authorization': 'Bearer ' + token
+			// 		},
+			// 	};
+			// 	fetch(process.env.BACKEND_URL + "/api/protected", requestOptions)
+			// 	.then(response => response.json)
+			// 	.then(data => setStore({ auth: data.valid }) )
+			// 	.catch(error => {
+			// 		console.error(error)
+            //         return false; 
+            //     })
+			// 	console.log(getStore().auth);
+			// },
+			logout: () => {
+				localStorage.removeItem("token");
+				localStorage.removeItem("username");
+				setStore({ auth: false })
+			},
+			setNewUser: (value) => {
+				setStore({ newUser: value })
+			},
+			setError: (value) => {
+				setStore({ error: value })
+			},
+			loadBeginning: () => {
+				if(localStorage.getItem("token")) return setStore({ auth: true })
 			}
 		}
 	};
